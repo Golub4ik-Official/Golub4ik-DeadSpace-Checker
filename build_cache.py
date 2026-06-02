@@ -1,25 +1,15 @@
-"""
-Скрипт для предварительного создания базы данных кэша жалоб.
-
-Запуск: python build_cache.py --token MTA...==
-или через config.py: python build_cache.py
-
-После завершения файл deadspace_checker.db можно распространять в релизах.
-Пользователь кладёт его в папку приложения — первый запуск без ожидания.
-"""
-
 import argparse
 import asyncio
 import logging
 import os
 import sys
-import types
 
 import discord
 
-from config_system import Config, load_file
-from services.database_service import DatabaseService
-from services.discord_service import DiscordService
+from deadspace_checker.config import Config, load_file
+from deadspace_checker.services.database_service import DatabaseService
+from deadspace_checker.services.discord_service import DiscordService
+from deadspace_checker.utils.discord_patch import patch_discord_client
 
 
 class CacheBuilder:
@@ -29,125 +19,9 @@ class CacheBuilder:
         intents = discord.Intents.default()
         intents.message_content = True
         self.client = discord.Client(intents=intents)
-        self._patch_discord()
+        patch_discord_client(self.client)
         self.db = DatabaseService()
         self.discord_service = DiscordService(self.client)
-
-    def _patch_discord(self):
-        import aiohttp
-
-        http = self.client.http
-        SESSION_ATTR = '_HTTPClient__session'
-
-        class _SelfbotRequest:
-            def __init__(self, original_fn, method, url, kwargs):
-                self._original_fn = original_fn
-                self._method = method
-                self._url = url
-                self._kwargs = dict(kwargs)
-                self._cm = None
-
-            def _patch_headers(self):
-                headers = self._kwargs.get('headers', {})
-                auth = headers.get('Authorization', '')
-                if auth.startswith('Bot '):
-                    headers['Authorization'] = auth[4:]
-                self._kwargs['headers'] = headers
-
-            def _get_cm(self):
-                if self._cm is None:
-                    self._patch_headers()
-                    self._cm = self._original_fn(self._method, self._url, **self._kwargs)
-                return self._cm
-
-            def __await__(self):
-                return self._get_cm().__await__()
-
-            async def __aenter__(self):
-                return await self._get_cm().__aenter__()
-
-            async def __aexit__(self, *args):
-                return await self._get_cm().__aexit__(*args)
-
-        async def patched_static_login(self_http, token):
-            if self_http.connector is discord.http.MISSING:
-                self_http.connector = aiohttp.TCPConnector(limit=0)
-
-            session = aiohttp.ClientSession(
-                connector=self_http.connector,
-                ws_response_class=discord.http.DiscordClientWebSocketResponse,
-                trace_configs=None if self_http.http_trace is None else [self_http.http_trace],
-            )
-            setattr(self_http, SESSION_ATTR, session)
-            self_http._global_over = asyncio.Event()
-            self_http._global_over.set()
-
-            original_session_req = session.request
-
-            def selfbot_request(method, url, **kwargs):
-                return _SelfbotRequest(original_session_req, method, url, kwargs)
-
-            session.request = selfbot_request
-
-            old_token = self_http.token
-            self_http.token = token
-
-            try:
-                data = await self_http.request(discord.http.Route('GET', '/users/@me'))
-            except discord.HTTPException as exc:
-                self_http.token = old_token
-                if exc.status == 401:
-                    raise discord.LoginFailure('Improper token has been passed.') from exc
-                raise
-
-            return data
-
-        http.static_login = types.MethodType(patched_static_login, http)
-
-        _loop = discord.client._loop
-
-        async def patched_login(self_client, token):
-            logging.info('logging in using static token (selfbot mode)')
-
-            if self_client.loop is _loop:
-                loop = asyncio.get_running_loop()
-                self_client.loop = loop
-                self_client.http.loop = loop
-                self_client._connection.loop = loop
-                self_client._ready = asyncio.Event()
-
-            if not isinstance(token, str):
-                raise TypeError(f'expected token to be a str, received {token.__class__.__name__} instead')
-            token = token.strip()
-
-            data = await self_client.http.static_login(token)
-            self_client._connection.user = discord.user.ClientUser(state=self_client._connection, data=data)
-
-            mock_app = types.SimpleNamespace(id=0, flags=discord.ApplicationFlags._from_value(0))
-            self_client._application = mock_app
-            if self_client._connection.application_id is None:
-                self_client._connection.application_id = mock_app.id
-            if not self_client._connection.application_flags:
-                self_client._connection.application_flags = mock_app.flags
-
-            await self_client.setup_hook()
-
-        self.client.login = types.MethodType(patched_login, self.client)
-
-        import discord.sticker
-        original = discord.sticker.Sticker._from_data
-
-        def patched_from_data(self, data):
-            try:
-                return original(self, data)
-            except KeyError:
-                self.id = int(data['id'])
-                self.name = data['name']
-                self.description = data['description']
-                self.format = f'unknown_{data.get("format_type", 0)}'
-                self.url = f'{discord.Asset.BASE}/stickers/{self.id}.png'
-
-        discord.sticker.Sticker._from_data = patched_from_data
 
     async def run(self):
         logging.info("Logging in to Discord...")
@@ -191,7 +65,7 @@ class CacheBuilder:
 def main():
     parser = argparse.ArgumentParser(description="Build DeadSpace Checker cache DB")
     parser.add_argument("--token", help="Discord user token")
-    parser.add_argument("--config", default="config.py", help="Config file path")
+    parser.add_argument("--config", default="deadspace_checker/config/default_config.py", help="Config file path")
     args = parser.parse_args()
 
     logging.basicConfig(

@@ -35,7 +35,7 @@ cd Golub4ik-DeadSpace-Check
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-python gui.py
+python -m deadspace_checker.gui.app
 ```
 
 #### Вариант 4 — Собрать базу самому (если в релизе нет готовой)
@@ -108,27 +108,50 @@ pip install pyinstaller
 pyinstaller DeadSpaceChecker.spec --noconfirm
 ```
 
-Готовый EXE появится в `dist/DeadSpaceChecker.exe`. Файлы `config.py` и `DeadSpaceLogo.png` вшиваются внутрь — менять настройки можно через GUI.
+Готовый EXE появится в `dist/DeadSpaceChecker.exe`. Файл `DeadSpaceLogo.png` вшивается внутрь — менять настройки можно через GUI.
 
 ### Структура проекта
 
 ```
-gui.py                          Графический интерфейс (tkinter)
-main.py                         CLI-вход (парсинг аргументов, запуск)
-bot.py                          Координатор: Discord + админка + сканер + отчёты
-admin_panel.py                  Скрапинг панели администратора (aiohttp + selectolax)
-build_cache.py                  CLI-скрипт для предсоздания БД
+gui/                            Графический интерфейс (tkinter)
+├── app.py                      Основное окно
+├── config_helper.py            Помощник конфигурации
+├── renderers/embed.py          Рендеринг Discord Embed
+├── tabs/                       Вкладки интерфейса
+└── widgets/                    Виджеты (ANSI-парсер, логи, очередь)
 
-core/
-├── scanner.py                  Загрузка сообщений, очередь задач, circuit breaker
-└── analyzer.py                 Корреляция игроков по HWID/IP/нике
+scanner/                        Сканирование и анализ
+├── scanner.py                  Главный сканер: загрузка, очередь, circuit breaker
+├── analyzer.py                 Корреляция игроков по HWID/IP/нике
+├── bypass.py                   BanBypassMixin — проверка обхода банов
+├── message_utils.py            Извлечение данных из сообщений
+├── player_merge.py             Слияние данных игрока
+└── utils.py                    CircuitBreaker, ExponentialBackoff, cached
 
 services/
-├── database_service.py         SQLite-бэкенд (кэш жалоб + админ-кэш + настройки)
+├── admin_service.py            Клиент API админки (наследует PlayerSearchMixin)
+├── cache.py                    LRUCache
 ├── cache_service.py            Обёртка для ComplaintChannel над SQLite
-├── admin_service.py            Клиент API админки с кэшированием
+├── database_service.py         SQLite-бэкенд (кэш жалоб + админ-кэш + настройки)
 ├── discord_service.py          Работа с Discord, поиск по каналам
-└── reporting/                  Генерация отчётов (HTML, JSON, терминал)
+├── graph_service.py            Генерация vis.js графа для HTML-отчёта
+├── load_optimizer.py           StabilizedLoadOptimizer — адаптивная подстройка
+├── search.py                   PlayerSearchMixin — поиск игроков
+├── vpn_detector.py             Обогащение данных о VPN/хостинге
+└── reporting/                  Генерация отчётов
+    ├── service.py              ReportService (оркестратор)
+    ├── config.py               ReportConfig + load_config_from_file
+    ├── constants.py            Все константы (BOX_CHARS, DISPLAY_LIMITS, ...)
+    ├── console_printer.py      ConsolePrinterMixin — печать в терминал
+    ├── report_generator.py     ReportDataGeneratorMixin — JSON/data отчёты
+    ├── formatter.py            ReportFormatter (базовое форматирование)
+    ├── formatter_layout.py     FormatterLayoutMixin — сложные layout'ы
+    ├── html_renderer.py        Публичное API HTML-отчётов
+    ├── html_builder.py         Внутренние HTML-компоненты (CSS, секции)
+    ├── utils.py                determine_owner, analyze_hwids, analyze_ips
+    ├── nickname_analysis.py    categorize_associated_nicknames
+    ├── complaint_analysis.py   analyze_complaints
+    └── connection_analysis.py  find_connection_paths
 
 models/
 ├── player.py                   Модель игрока
@@ -145,6 +168,8 @@ utils/
 ├── embed_utils.py              Парсинг Discord Embed
 └── performance_monitor.py      Трекинг производительности
 
+main.py                         CLI-вход (парсинг аргументов, запуск)
+build_cache.py                  CLI-скрипт для предсоздания БД
 DeadSpaceChecker.spec           Спецификация PyInstaller
 ```
 
@@ -161,7 +186,7 @@ DeadSpaceChecker.spec           Спецификация PyInstaller
 
 ### Конфигурация
 
-Основные настройки задаются через GUI (кнопка ⚙️). Для продвинутой настройки — отредактируй `config.py`:
+Основные настройки задаются через GUI (кнопка ⚙️). Для продвинутой настройки — отредактируй `deadspace_checker/config/config_system.py`:
 
 - **Discord**: токен, ID каналов, лимит истории сообщений
 - **API**: URL админки, таймауты, конкурентность
@@ -172,6 +197,8 @@ DeadSpaceChecker.spec           Спецификация PyInstaller
 
 Конфиг можно переопределить через GUI — изменения сохраняются в SQLite и применяются при следующем запуске.
 
+Константы отображения (бокс-чарсы, лимиты списков, цветовые схемы) лежат в `deadspace_checker/services/reporting/constants.py`.
+
 ### CLI-режимы (без GUI)
 
 ```bash
@@ -180,7 +207,7 @@ python main.py --username Игрок                         # Пробив по
 python main.py --check-ban-bypass --ban-bypass-pages 10 # Проверка обхода банов
 ```
 
-Аргументы `--config`, `--log-level` тоже поддерживаются.
+Аргументы `--config`, `--log-level` тоже поддерживаются. Discord-бот запускается через `python -m deadspace_checker.discord_bot.bot`.
 
 ### Создание БД без GUI
 
@@ -196,7 +223,7 @@ python build_cache.py --token ВАШ_DISCORD_ТОКЕН
 python -m pytest tests/ -v
 ```
 
-162 теста покрывают модели, утилиты, DatabaseService и reporting.
+162 теста покрывают модели, утилиты, DatabaseService, reporting и analysis-функции.
 
 ---
 
