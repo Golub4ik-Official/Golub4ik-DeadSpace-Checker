@@ -66,23 +66,96 @@ python build_cache.py --token ВАШ_DISCORD_ТОКЕН
 
 ### Интерфейс
 
-Программа запускается как обычное окно Windows. Все настройки вводятся в поля и сохраняются кнопкой **Сохранить настройки**.
+Окно программы (`860x780`) выполнено в тёмной «космической» теме с анимированным звёздным фоном. Все настройки вводятся в поля и сохраняются в SQLite.
 
-**Поля для заполнения:**
-- Имя и пароль администратора (от DeadSpace14)
-- Токен Discord
-- Количество сообщений для сканирования
-- Количество страниц для проверки обхода банов
+#### 🔐 Панель доступа (в верхней части окна)
 
-**Три режима работы:**
-
-| Режим | Что делает |
+| Поле/Кнопка | Назначение |
 |---|---|
-| **Пробив игрока по нику** | Вводишь ник — получаешь наказания, связанные аккаунты, IP, HWID, жалобы |
-| **Сканирование новых сообщений** | Мониторит канал «Arrived new player», собирает всех новых игроков |
-| **Проверка обхода банов** | Массовая проверка: ищет, не заходит ли забаненный игрок под другими аккаунтами |
+| **Администратор** | Логин от аккаунта Space Station 14 (для доступа к админ-панели) |
+| **Пароль** | Пароль от SS14. Скрыт звёздочками |
+| **Discord токен** | Self-bot токен Discord (см. инструкцию выше). Скрыт звёздочками. Кнопка `?` — подсказка как получить токен |
+| **Auth cookie (опц.)** | Cookie `AspNetCore.Cookies` для авторизации в админ-панели без логина/пароля |
+| **👁 Показать** | Включает отображение пароля и токена открытым текстом |
+| **💾 Сохранить настройки** | Сохраняет все введённые данные в SQLite. При следующем запуске поля заполнятся автоматически |
 
-После завершения любого режима можно сформировать **HTML-отчёт** — он откроется в браузере.
+#### 🔍 Вкладка «Поиск» — сканирование и пробив
+
+**Группа «Режим сканирования»:**
+
+| Элемент | Назначение |
+|---|---|
+| **🔎 Пробив игрока по нику** | Одиночный режим. Вводишь ник — сканирует Discord + админ-панель, собирает все наказания, связанные аккаунты, IP, HWID, временные метки. Формирует подробный HTML-отчёт |
+| **🛡 Проверка обхода банов** | Массовый режим. Сканирует N страниц админ-панели (по 2000 записей каждая), ищет забаненных игроков, которые заходят под другими аккаунтами. Выводит связи HWID/IP/Username |
+| **Имя игрока** | Поле ввода ника (активно только в режиме «Пробив по нику») |
+| **Кол-во сообщений** | Сколько последних сообщений из канала жалоб Discord загружать (для поиска упоминаний игрока) |
+| **Страниц обхода** | Сколько страниц админ-панели сканировать при проверке обхода банов (1 стр. ≈ 2000 записей) |
+| **⚡ Авто-бан IP/HWID** | При обнаружении обхода бана — автоматически отправить бан на IP и HWID нарушителя (активно только в режиме «Проверка обхода») |
+
+**Кнопки действий:**
+
+| Кнопка | Назначение |
+|---|---|
+| **▶ Запуск** | Запускает сканирование в фоновом потоке. Перед запуском показывает информационные диалоги (первый запуск, предупреждение об обходе банов) |
+| **■ Остановить** | Прерывает текущее сканирование (отменяет asyncio-задачи и закрывает соединения) |
+| **⚙️** | Открывает окно расширенных настроек конфигурации (4 вкладки) |
+
+**Группа «Прогресс»:**
+
+| Элемент | Назначение |
+|---|---|
+| **Progress bar** | Индикатор выполнения текущей операции |
+| **Текст статуса** | Описание текущего этапа + прошедшее время (⏱) |
+
+**Группа «Статус»:**
+
+Окно лога с цветовой маркировкой:
+- 🟦 `info` — информационные сообщения (бирюзовый)
+- 🟩 `success` — успешные операции (зелёный)
+- 🟥 `error` — ошибки (красный)
+- 🟨 `warning` — предупреждения (жёлтый/золотой)
+- ⬜ `dim` — технические детали (серый)
+
+В лог выводятся все этапы: авторизация в админ-панели, загрузка сообщений из Discord, поиск связей, проверка VPN/хостинга, формирование отчёта.
+
+**После завершения сканирования:**
+1. Автоматически проверяет IP на VPN/хостинг через `vpn_detector`
+2. Генерирует HTML-отчёт и открывает его в браузере
+3. Предлагает сохранить HTML-отчёт в выбранную папку
+
+#### 🔨 Вкладка «Блокировка» — массовая выдача банов
+
+| Элемент | Назначение |
+|---|---|
+| **🎯 Цели** | Многострочное текстовое поле. Каждая строка — одна цель: HWID, IP-адрес или Username. Тип определяется автоматически |
+| **Причина** | Текст причины бана. По умолчанию — «Перманентная блокировка...» |
+| **📋 Пресеты** | Открывает окно с шаблонами причин бана: — *Локальные пресеты* (Обход блокировки, ПДК по жалобе, Набег на сервер партнёров, Набегаторский твинк, Перманентная, Набегатор, БВО) — *Пресеты с админ-сайта* (загружаются через админ-панель по кнопке «📥 Загрузить с админки») |
+| **🔄 Сброс** | Сбрасывает причину на значение по умолчанию |
+| **📍 Забанить последний IP** | Если цель — username, дополнительно банит его последний известный IP |
+| **🔑 Забанить последний HWID** | Если цель — username, дополнительно банит его последний известный HWID (включено по умолчанию) |
+| **Длительность (мин)** | Длительность бана в минутах. `0` = навсегда |
+| **🔨 Выдать блокировку** | Запускает процесс бана: логинится в админ-панель, по каждой цели определяет тип (IP/HWID/UID/Nick), отправляет запрос на создание бана. Результат выводится в окно ниже |
+
+**Группа «Результат»:** окно лога с результатами каждой блокировки (✅ УСПЕХ / ❌ ОШИБКА), итоговой статистикой (успешно/ошибок).
+
+#### ⚙️ Окно расширенных настроек (кнопка ⚙️)
+
+Четыре вкладки с тонкой настройкой:
+
+| Вкладка | Параметры |
+|---|---|
+| **Discord** | `TARGET_CHANNEL_ID`, `COMPLAINT_CHANNEL_IDS` (список ID каналов жалоб), `MESSAGE_HISTORY_LIMIT` |
+| **API** | `BASE_ADMIN_URL`, `ACCOUNT_URL`, таймауты (`OPERATION_TIMEOUT`, `REQUEST_TIMEOUT`, `SEARCH_TIMEOUT`, `BATCH_TIMEOUT`, `TERM_TIMEOUT`), `MAX_CONCURRENT_REQUESTS` |
+| **Сканирование** | `SEARCH_MAX_DEPTH`, лимиты поиска (`SEARCH_LIMIT_ROOT`/`LEVEL1`/`LEVEL2`/`DEFAULT`), `BYPASS_SEARCH_MAX_DEPTH`, кэш (`SEARCH_CACHE_MAX_SIZE`, `SEARCH_CACHE_TTL`) |
+| **Тайминги** | Пороги совпадения по времени: `CLOSE_TIME_THRESHOLD_MINUTES`, `TIME_THRESHOLD_MINUTES`, `SUSPICIOUS_TIME_THRESHOLD_MINUTES`, `IP_MATCH_TIMEDELTA_MINUTES` |
+
+Изменения сохраняются в SQLite и применяются при следующем запуске.
+
+#### 🎨 Визуальные эффекты
+
+- **Анимированный звёздный фон** — 250 мерцающих звёзд, перерисовывается при изменении размера окна
+- **Glass-карточки** — полупрозрачные рамки вокруг блоков интерфейса
+- **Цветовая схема** — глубокий тёмно-синий фон (`#070714`), бирюзовые акценты (`#22d3ee`), фиолетовый, золотой, зелёный
 
 ### Где искать результаты
 
@@ -113,64 +186,109 @@ pyinstaller DeadSpaceChecker.spec --noconfirm
 ### Структура проекта
 
 ```
-gui/                            Графический интерфейс (tkinter)
-├── app.py                      Основное окно
-├── config_helper.py            Помощник конфигурации
-├── renderers/embed.py          Рендеринг Discord Embed
-├── tabs/                       Вкладки интерфейса
-└── widgets/                    Виджеты (ANSI-парсер, логи, очередь)
+deadspace_checker/              Основной пакет
+├── __init__.py
+│
+├── admin/                      Взаимодействие с админ-панелью SS14
+│   ├── __init__.py
+│   ├── models.py               ConnectionData, SS14AdminAPI
+│   └── panel.py                AdminPanel — login, парсинг таблиц, пагинация, кэш
+│
+├── config/                     Конфигурация
+│   ├── __init__.py              load_file()
+│   ├── config_system.py         Config (@dataclass), get_config(), Sections
+│   └── default_config.py        Значения по умолчанию
+│
+├── discord_bot/                Discord self-bot
+│   ├── __init__.py
+│   └── bot.py                  BanCheckerBot — координатор: сканер + админка + отчёты
+│
+├── gui/                        Графический интерфейс (tkinter)
+│   ├── __init__.py
+│   ├── app.py                  BanCheckerGUI — главное окно (1453 строки)
+│   ├── config_helper.py        Константы и маппинг конфигов для GUI
+│   ├── renderers/
+│   │   └── embed.py            Рендеринг Discord Embed
+│   ├── tabs/
+│   │   └── __init__.py         (вкладки встроены в app.py)
+│   └── widgets/
+│       ├── ansi_parser.py      Парсинг ANSI-цветов в Tkinter Text
+│       ├── log_handler.py      QueueLogHandler → очередь GUI
+│       └── queue_stream.py     QueueStream — перехват stdout
+│
+├── models/                     Модели данных
+│   ├── __init__.py
+│   ├── complaint.py            ComplaintMessage, ComplaintChannel
+│   ├── message.py              DiscordMessage, ScanResult
+│   ├── player.py               Player
+│   └── verdict.py              VerdictCategory, ConfidenceLevel
+│
+├── scanner/                    Сканирование и анализ
+│   ├── __init__.py
+│   ├── analyzer.py             Корреляция игроков по HWID/IP/нике
+│   ├── bypass.py               BanBypassMixin — проверка обхода банов
+│   ├── message_utils.py        Извлечение данных из сообщений
+│   ├── player_merge.py         Слияние данных игрока
+│   ├── scanner.py              Главный сканер: загрузка, очередь, circuit breaker
+│   └── utils.py                CircuitBreaker, ExponentialBackoff, cached
+│
+├── services/                   Службы
+│   ├── __init__.py
+│   ├── admin_service.py        Клиент API админки (наследует PlayerSearchMixin)
+│   ├── cache.py                LRUCache
+│   ├── cache_service.py        Обёртка для ComplaintChannel над SQLite
+│   ├── database_service.py     SQLite-бэкенд (кэш жалоб + настройки GUI)
+│   ├── discord_service.py      Работа с Discord, поиск по каналам
+│   ├── graph_service.py        Генерация vis.js графа для HTML-отчёта
+│   ├── load_optimizer.py       StabilizedLoadOptimizer — адаптивная подстройка
+│   ├── search.py               PlayerSearchMixin — поиск игроков
+│   ├── vpn_detector.py         Обогащение данных о VPN/хостинге
+│   └── reporting/              Генерация отчётов
+│       ├── __init__.py
+│       ├── service.py          ReportService (оркестратор)
+│       ├── report_config.py    ReportConfig + load_config_from_file
+│       ├── constants.py        Все константы (BOX_CHARS, DISPLAY_LIMITS, ...)
+│       ├── console_printer.py  ConsolePrinterMixin — печать в терминал
+│       ├── report_generator.py ReportDataGeneratorMixin — JSON/data отчёты
+│       ├── report_format.py    ReportFormatter (базовое форматирование)
+│       ├── formatter.py        Formatter (перенаправление)
+│       ├── formatter_layout.py FormatterLayoutMixin — сложные layout'ы
+│       ├── html_renderer.py    Публичное API HTML-отчётов
+│       ├── html_builder.py     Внутренние HTML-компоненты (CSS, секции)
+│       ├── utils.py            determine_owner, analyze_hwids, analyze_ips
+│       ├── nickname_analysis.py   categorize_associated_nicknames
+│       ├── complaint_analysis.py  analyze_complaints
+│       └── connection_analysis.py find_connection_paths
+│
+├── utils/                      Утилиты
+│   ├── __init__.py
+│   ├── async_utils.py          Утилиты для асинхронной работы
+│   ├── discord_patch.py        Патчи для discord.py-self
+│   ├── discord_utils.py        Парсинг Discord-ссылок
+│   ├── embed_utils.py          Парсинг Discord Embed
+│   ├── logging_utils.py        Логирование с ротацией и цветами
+│   ├── path_utils.py           PyInstaller-совместимые пути
+│   ├── performance_monitor.py  Трекинг производительности
+│   └── url_utils.py            Извлечение ссылок и поисковых термов
+│
+├── tests/                      Тесты
+│   ├── conftest.py             Pytest fixtures (SQLite in-memory, DiscordBot mock)
+│   ├── test_config_system.py
+│   ├── core/test_analyzer.py
+│   ├── models/test_complaint.py, test_message.py, test_player.py, test_verdict.py
+│   ├── services/test_database_service.py
+│   └── services/reporting/test_reporting_utils.py
+│   └── utils/test_discord_utils.py, test_url_utils.py
+│
+├── main.py                     CLI-вход (парсинг аргументов, запуск)
+├── build_cache.py              CLI-скрипт для предсоздания БД
+```
 
-scanner/                        Сканирование и анализ
-├── scanner.py                  Главный сканер: загрузка, очередь, circuit breaker
-├── analyzer.py                 Корреляция игроков по HWID/IP/нике
-├── bypass.py                   BanBypassMixin — проверка обхода банов
-├── message_utils.py            Извлечение данных из сообщений
-├── player_merge.py             Слияние данных игрока
-└── utils.py                    CircuitBreaker, ExponentialBackoff, cached
-
-services/
-├── admin_service.py            Клиент API админки (наследует PlayerSearchMixin)
-├── cache.py                    LRUCache
-├── cache_service.py            Обёртка для ComplaintChannel над SQLite
-├── database_service.py         SQLite-бэкенд (кэш жалоб + админ-кэш + настройки)
-├── discord_service.py          Работа с Discord, поиск по каналам
-├── graph_service.py            Генерация vis.js графа для HTML-отчёта
-├── load_optimizer.py           StabilizedLoadOptimizer — адаптивная подстройка
-├── search.py                   PlayerSearchMixin — поиск игроков
-├── vpn_detector.py             Обогащение данных о VPN/хостинге
-└── reporting/                  Генерация отчётов
-    ├── service.py              ReportService (оркестратор)
-    ├── config.py               ReportConfig + load_config_from_file
-    ├── constants.py            Все константы (BOX_CHARS, DISPLAY_LIMITS, ...)
-    ├── console_printer.py      ConsolePrinterMixin — печать в терминал
-    ├── report_generator.py     ReportDataGeneratorMixin — JSON/data отчёты
-    ├── formatter.py            ReportFormatter (базовое форматирование)
-    ├── formatter_layout.py     FormatterLayoutMixin — сложные layout'ы
-    ├── html_renderer.py        Публичное API HTML-отчётов
-    ├── html_builder.py         Внутренние HTML-компоненты (CSS, секции)
-    ├── utils.py                determine_owner, analyze_hwids, analyze_ips
-    ├── nickname_analysis.py    categorize_associated_nicknames
-    ├── complaint_analysis.py   analyze_complaints
-    └── connection_analysis.py  find_connection_paths
-
-models/
-├── player.py                   Модель игрока
-├── message.py                  DiscordMessage, ScanResult
-├── complaint.py                ComplaintMessage, ComplaintChannel
-└── verdict.py                  VerdictCategory, ConfidenceLevel
-
-utils/
-├── path_utils.py               PyInstaller-совместимые пути
-├── logging_utils.py            Логирование с ротацией и цветами
-├── async_utils.py              Утилиты для асинхронной работы
-├── discord_utils.py            Парсинг Discord-ссылок
-├── url_utils.py                Извлечение ссылок и поисковых термов
-├── embed_utils.py              Парсинг Discord Embed
-└── performance_monitor.py      Трекинг производительности
-
-main.py                         CLI-вход (парсинг аргументов, запуск)
-build_cache.py                  CLI-скрипт для предсоздания БД
+Корневые файлы:
+```
 DeadSpaceChecker.spec           Спецификация PyInstaller
+requirements.txt                Зависимости
+README.md                       Этот файл
 ```
 
 ### Зависимости
