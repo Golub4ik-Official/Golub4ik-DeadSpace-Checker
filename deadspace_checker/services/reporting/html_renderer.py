@@ -43,7 +43,8 @@ def render_scan_report_html(data: List[dict], logo_b64: str = "") -> str:
     html_parts.append('<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>')
     html_parts.append(f'</head><body><div class="report">')
     logo_html = f'<img src="data:image/png;base64,{logo_b64}" width="48" height="48" alt="" style="border-radius:6px;border:1px solid #2a2a50">' if logo_b64 else ""
-    html_parts.append(f'  <div class="header"><div class="header-left"><h1>🔍 {esc(primary)}</h1><div class="sub">Ник поиска: {esc(nick)}</div></div>{logo_html}</div>')
+    support_html = '<div style="text-align:right;font-size:11px;white-space:nowrap"><a href="#" onclick="showSupport()" style="color:#fbbf24;text-decoration:none;font-weight:600">❤️ Поддержать автора</a></div>'
+    html_parts.append(f'  <div class="header"><div class="header-left"><h1>🔍 {esc(primary)}</h1><div class="sub">Ник поиска: {esc(nick)}</div></div><div style="display:flex;align-items:center;gap:10px">{logo_html}{support_html}</div></div>')
     html_parts.append(f'<span class="status-badge">{esc(status_ru)}</span>')
 
     if not has_data:
@@ -80,6 +81,23 @@ def render_scan_report_html(data: List[dict], logo_b64: str = "") -> str:
             elif typ == "denied_login_attempts":
                 _render_denied_logins_section(html_parts, item)
 
+    html_parts.append("""
+<div id="supportModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center" onclick="if(event.target===this)closeSupport()">
+<div style="background:#0f0f24;border:1px solid #2a2a50;border-radius:12px;padding:24px;max-width:440px;width:90%;color:#d4d4d4;font-family:'Segoe UI',sans-serif">
+<h2 style="color:#22d3ee;margin:0 0 4px;font-size:18px">❤️ Поддержать автора</h2>
+<p style="color:#d4d4d4;font-size:13px;margin:8px 0 14px">Спасибо, что используете DeadSpace Checker! Если проект вам помог, вы можете поддержать автора:</p>
+<div style="margin:10px 0">
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Карта Сбербанк:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">2202 2068 9547 6567</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Boosty:</span><a href="https://boosty.to/golub4ik" target="_blank" style="color:#22d3ee;font-size:13px">boosty.to/golub4ik</a><span style="color:#6b7280;font-size:11px">(скоро)</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Steam:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">osnova_golubia</span><span style="color:#6b7280;font-size:11px">(Россия)</span></div>
+</div>
+<p style="color:#6b7280;font-size:11px;margin:8px 0 0">Boosty пока не работает, но скоро будет доступен</p>
+<button onclick="closeSupport()" style="margin-top:14px;background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Закрыть</button>
+</div></div>
+<script>
+function showSupport(){document.getElementById('supportModal').style.display='flex'}
+function closeSupport(){document.getElementById('supportModal').style.display='none'}
+</script>""")
     html_parts.append('<div class="footer">🚀 <span class="brand">Golub4ik (WikiHampter) DeadSpace Checker</span> ☆ Dead Space 14</div>')
     html_parts.append('</div></body></html>')
     return "".join(html_parts)
@@ -102,8 +120,7 @@ def render_ban_bypass_report_html(report_data: List[dict]) -> str:
     html_parts.append('</head><body><div class="wrap">')
 
     scan_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    html_parts.append(f'<h1>🛡 Проверка обхода банов</h1>')
-    html_parts.append(f'<div class="sub">Время сканирования: {esc(scan_time)} | Всего записей: {len(report_data)}</div>')
+    html_parts.append(f'<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>🛡 Проверка обхода банов</h1><div class="sub">Время сканирования: {esc(scan_time)} | Всего записей: {len(report_data)}</div></div><div style="text-align:right;font-size:11px;white-space:nowrap"><a href="#" onclick="showSupport()" style="color:#fbbf24;text-decoration:none;font-weight:600">❤️ Поддержать автора</a></div></div>')
 
     total = len(report_data)
     hwid_matches = sum(1 for r in report_data if r.get("ban_bypass_confidence") == "HWID_MATCH")
@@ -208,6 +225,23 @@ def render_ban_bypass_report_html(report_data: List[dict]) -> str:
             html_parts.append(f'  </div>')
             html_parts.append(f'</div>')
 
+    html_parts.append("""
+<div id="supportModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center" onclick="if(event.target===this)closeSupport()">
+<div style="background:#0f0f24;border:1px solid #2a2a50;border-radius:12px;padding:24px;max-width:440px;width:90%;color:#d4d4d4;font-family:'Segoe UI',sans-serif">
+<h2 style="color:#22d3ee;margin:0 0 4px;font-size:18px">❤️ Поддержать автора</h2>
+<p style="color:#d4d4d4;font-size:13px;margin:8px 0 14px">Спасибо, что используете DeadSpace Checker! Если проект вам помог, вы можете поддержать автора:</p>
+<div style="margin:10px 0">
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Карта Сбербанк:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">2202 2068 9547 6567</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Boosty:</span><a href="https://boosty.to/golub4ik" target="_blank" style="color:#22d3ee;font-size:13px">boosty.to/golub4ik</a><span style="color:#6b7280;font-size:11px">(скоро)</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Steam:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">osnova_golubia</span><span style="color:#6b7280;font-size:11px">(Россия)</span></div>
+</div>
+<p style="color:#6b7280;font-size:11px;margin:8px 0 0">Boosty пока не работает, но скоро будет доступен</p>
+<button onclick="closeSupport()" style="margin-top:14px;background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Закрыть</button>
+</div></div>
+<script>
+function showSupport(){document.getElementById('supportModal').style.display='flex'}
+function closeSupport(){document.getElementById('supportModal').style.display='none'}
+</script>""")
     html_parts.append('<div class="footer">🚀 <span class="brand">Golub4ik (WikiHampter) DeadSpace Checker</span> ☆ Dead Space 14</div>')
     html_parts.append('</div></body></html>')
     return "".join(html_parts)

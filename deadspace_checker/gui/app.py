@@ -254,6 +254,11 @@ class BanCheckerGUI:
         tk.Label(title_frame, text="☆ Dead Space 14 ☆  Космическая Станция 14", font=("Segoe UI", 8),
                  fg=SPACE_COLORS["text_dim"], bg=SPACE_COLORS["bg_deep"]).pack(anchor="w")
 
+        support_frame = tk.Frame(header_frame, bg=SPACE_COLORS["bg_deep"])
+        support_frame.grid(row=0, column=2, rowspan=2, sticky="ne", padx=(8, 0))
+        ttk.Button(support_frame, text="❤️ Поддержать", style="Gold.TButton",
+                   command=self._show_support_dialog).pack()
+
         self._build_credentials(main)
         self._build_notebook(main)
         self.root.after(100, self._draw_glass_cards)
@@ -540,6 +545,55 @@ class BanCheckerGUI:
             "   authorization: и скопируйте его значение\n"
         )
         messagebox.showinfo("Как получить токен Discord", msg)
+
+    def _show_support_dialog(self):
+        dialog = tk.Toplevel(self.root)
+        dialog.title("❤️ Поддержать автора")
+        dialog.geometry("480x340")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        dialog.configure(bg=SPACE_COLORS["bg_panel"])
+
+        frame = tk.Frame(dialog, bg=SPACE_COLORS["bg_panel"], padx=20, pady=20)
+        frame.pack(fill="both", expand=True)
+
+        tk.Label(frame, text="❤️ Спасибо, что используете DeadSpace Checker!",
+                 font=("Segoe UI", 14, "bold"), fg=SPACE_COLORS["cyan"],
+                 bg=SPACE_COLORS["bg_panel"]).pack(anchor="w")
+        tk.Label(frame, text="Если проект оказался полезным, вы можете поддержать автора:",
+                 font=("Segoe UI", 10), fg=SPACE_COLORS["text"],
+                 bg=SPACE_COLORS["bg_panel"], wraplength=440).pack(anchor="w", pady=(8, 12))
+
+        sep = tk.Frame(frame, bg=SPACE_COLORS["border"], height=1)
+        sep.pack(fill="x", pady=(0, 12))
+
+        def make_row(label, value, copy_val=None):
+            row = tk.Frame(frame, bg=SPACE_COLORS["bg_panel"])
+            row.pack(fill="x", pady=3)
+            tk.Label(row, text=label, font=("Segoe UI", 10, "bold"),
+                     fg=SPACE_COLORS["gold"], bg=SPACE_COLORS["bg_panel"],
+                     width=14, anchor="w").pack(side="left")
+            tk.Label(row, text=value, font=("Consolas", 10),
+                     fg=SPACE_COLORS["text"], bg=SPACE_COLORS["bg_panel"]).pack(side="left", padx=(4, 0))
+            if copy_val:
+                btn = ttk.Button(row, text="📋", width=2, style="Small.TButton",
+                                 command=lambda v=copy_val: self.root.clipboard_append(v))
+                btn.pack(side="left", padx=(4, 0))
+
+        make_row("Карта Сбербанк:", "2202 2068 9547 6567", "2202206895476567")
+        make_row("Boosty:", "boosty.to/golub4ik")
+        make_row("Steam:", "osnova_golubia")
+
+        tk.Frame(frame, bg=SPACE_COLORS["border"], height=1).pack(fill="x", pady=(12, 4))
+        tk.Label(frame, text="💡 Boosty пока не работает, но скоро будет доступен",
+                 font=("Segoe UI", 9), fg=SPACE_COLORS["text_dim"],
+                 bg=SPACE_COLORS["bg_panel"], wraplength=440).pack(anchor="w")
+
+        btn_row = tk.Frame(frame, bg=SPACE_COLORS["bg_panel"])
+        btn_row.pack(fill="x", pady=(12, 0))
+        ttk.Button(btn_row, text="Закрыть", style="Dim.TButton",
+                   command=dialog.destroy).pack(side="right")
 
     def _on_mode_change(self):
         mode = self.scan_mode.get()
