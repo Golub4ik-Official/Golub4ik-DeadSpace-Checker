@@ -87,14 +87,16 @@ def render_scan_report_html(data: List[dict], logo_b64: str = "") -> str:
 <h2 style="color:#22d3ee;margin:0 0 4px;font-size:18px">❤️ Поддержать автора</h2>
 <p style="color:#d4d4d4;font-size:13px;margin:8px 0 14px">Спасибо, что используете DeadSpace Checker! Если проект вам помог, вы можете поддержать автора:</p>
 <div style="margin:10px 0">
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Карта Сбербанк:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">2202 2068 9547 6567</span></div>
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Boosty:</span><a href="https://boosty.to/golub4ik" target="_blank" style="color:#22d3ee;font-size:13px">boosty.to/golub4ik</a><span style="color:#6b7280;font-size:11px">(скоро)</span></div>
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Steam:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">osnova_golubia</span><span style="color:#6b7280;font-size:11px">(Россия)</span></div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Карта Сбербанк:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">2202 2068 9547 6567</span><button onclick="copyText('2202206895476567')" style="background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:4px;cursor:pointer;font-size:12px;padding:2px 6px">📋</button></div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Boosty:</span><a href="https://boosty.to/golub4ik" target="_blank" style="color:#22d3ee;font-size:13px">boosty.to/golub4ik</a><span style="color:#6b7280;font-size:11px">(скоро будет работать)</span><button onclick="copyText('https://boosty.to/golub4ik')" style="background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:4px;cursor:pointer;font-size:12px;padding:2px 6px">📋</button></div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Steam:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">osnova_golubia</span><span style="color:#6b7280;font-size:11px">(Россия)</span><button onclick="copyText('osnova_golubia')" style="background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:4px;cursor:pointer;font-size:12px;padding:2px 6px">📋</button></div>
 </div>
 <p style="color:#6b7280;font-size:11px;margin:8px 0 0">Boosty пока не работает, но скоро будет доступен</p>
 <button onclick="closeSupport()" style="margin-top:14px;background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Закрыть</button>
 </div></div>
 <script>
+function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(function(){fallbackCopy(t)});else fallbackCopy(t)}
+function fallbackCopy(t){var e=document.createElement('textarea');e.value=t;e.style.position='fixed';e.style.left='-9999px';document.body.appendChild(e);e.select();try{document.execCommand('copy')}catch(ex){}document.body.removeChild(e)}
 function showSupport(){document.getElementById('supportModal').style.display='flex'}
 function closeSupport(){document.getElementById('supportModal').style.display='none'}
 </script>""")
@@ -231,14 +233,16 @@ def render_ban_bypass_report_html(report_data: List[dict]) -> str:
 <h2 style="color:#22d3ee;margin:0 0 4px;font-size:18px">❤️ Поддержать автора</h2>
 <p style="color:#d4d4d4;font-size:13px;margin:8px 0 14px">Спасибо, что используете DeadSpace Checker! Если проект вам помог, вы можете поддержать автора:</p>
 <div style="margin:10px 0">
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Карта Сбербанк:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">2202 2068 9547 6567</span></div>
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Boosty:</span><a href="https://boosty.to/golub4ik" target="_blank" style="color:#22d3ee;font-size:13px">boosty.to/golub4ik</a><span style="color:#6b7280;font-size:11px">(скоро)</span></div>
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Steam:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">osnova_golubia</span><span style="color:#6b7280;font-size:11px">(Россия)</span></div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Карта Сбербанк:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">2202 2068 9547 6567</span><button onclick="copyText('2202206895476567')" style="background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:4px;cursor:pointer;font-size:12px;padding:2px 6px">📋</button></div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Boosty:</span><a href="https://boosty.to/golub4ik" target="_blank" style="color:#22d3ee;font-size:13px">boosty.to/golub4ik</a><span style="color:#6b7280;font-size:11px">(скоро будет работать)</span><button onclick="copyText('https://boosty.to/golub4ik')" style="background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:4px;cursor:pointer;font-size:12px;padding:2px 6px">📋</button></div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 0"><span style="color:#fbbf24;font-weight:600;min-width:100px">Steam:</span><span style="font-family:Consolas,monospace;font-size:13px;color:#e2e8f0">osnova_golubia</span><span style="color:#6b7280;font-size:11px">(Россия)</span><button onclick="copyText('osnova_golubia')" style="background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:4px;cursor:pointer;font-size:12px;padding:2px 6px">📋</button></div>
 </div>
 <p style="color:#6b7280;font-size:11px;margin:8px 0 0">Boosty пока не работает, но скоро будет доступен</p>
 <button onclick="closeSupport()" style="margin-top:14px;background:#151530;color:#22d3ee;border:1px solid #2a2a50;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Закрыть</button>
 </div></div>
 <script>
+function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(function(){fallbackCopy(t)});else fallbackCopy(t)}
+function fallbackCopy(t){var e=document.createElement('textarea');e.value=t;e.style.position='fixed';e.style.left='-9999px';document.body.appendChild(e);e.select();try{document.execCommand('copy')}catch(ex){}document.body.removeChild(e)}
 function showSupport(){document.getElementById('supportModal').style.display='flex'}
 function closeSupport(){document.getElementById('supportModal').style.display='none'}
 </script>""")

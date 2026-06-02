@@ -549,7 +549,7 @@ class BanCheckerGUI:
     def _show_support_dialog(self):
         dialog = tk.Toplevel(self.root)
         dialog.title("❤️ Поддержать автора")
-        dialog.geometry("480x340")
+        dialog.geometry("520x380")
         dialog.resizable(False, False)
         dialog.transient(self.root)
         dialog.grab_set()
@@ -568,7 +568,7 @@ class BanCheckerGUI:
         sep = tk.Frame(frame, bg=SPACE_COLORS["border"], height=1)
         sep.pack(fill="x", pady=(0, 12))
 
-        def make_row(label, value, copy_val=None):
+        def make_row(label, value, copy_val=None, extra=""):
             row = tk.Frame(frame, bg=SPACE_COLORS["bg_panel"])
             row.pack(fill="x", pady=3)
             tk.Label(row, text=label, font=("Segoe UI", 10, "bold"),
@@ -576,14 +576,17 @@ class BanCheckerGUI:
                      width=14, anchor="w").pack(side="left")
             tk.Label(row, text=value, font=("Consolas", 10),
                      fg=SPACE_COLORS["text"], bg=SPACE_COLORS["bg_panel"]).pack(side="left", padx=(4, 0))
+            if extra:
+                tk.Label(row, text=extra, font=("Segoe UI", 9),
+                         fg=SPACE_COLORS["text_dim"], bg=SPACE_COLORS["bg_panel"]).pack(side="left", padx=(4, 0))
             if copy_val:
                 btn = ttk.Button(row, text="📋", width=2, style="Small.TButton",
                                  command=lambda v=copy_val: self.root.clipboard_append(v))
                 btn.pack(side="left", padx=(4, 0))
 
         make_row("Карта Сбербанк:", "2202 2068 9547 6567", "2202206895476567")
-        make_row("Boosty:", "boosty.to/golub4ik")
-        make_row("Steam:", "osnova_golubia")
+        make_row("Boosty:", "boosty.to/golub4ik", "boosty.to/golub4ik", "(скоро будет работать)")
+        make_row("Steam:", "osnova_golubia", "osnova_golubia", "(Россия)")
 
         tk.Frame(frame, bg=SPACE_COLORS["border"], height=1).pack(fill="x", pady=(12, 4))
         tk.Label(frame, text="💡 Boosty пока не работает, но скоро будет доступен",
